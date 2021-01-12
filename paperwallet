@@ -374,11 +374,10 @@ esac
 }
 
 [ "${ENCRYPT_KEY}" -eq 1 ] && {
-    [ -z "${PASSPHRASE}" ] && {
+    if [ "${TEMPLATE}" != "verusid" ] && [ -z "${PASSPHRASE}" ]; then
         echo "Encryption requested but no passphrase set. exiting."
         exit 1
-    }
-
+    fi
     KEY=$(echo "${KEY}" | ${OPENSSL} enc -e -aes-256-cbc -a -salt -pbkdf2 -A -k "${PASSPHRASE}")
 } || {
     case "${ADDRESS_TYPE}" in
@@ -388,7 +387,7 @@ esac
     "z")
         TEMPLATE="z-plain"
         ;;
-esac
+    esac
 }
 
 case "${TEMPLATE}" in
