@@ -47,12 +47,12 @@ OPENSSL=$(which openssl)
     exit 1
 }
 
-## awk
-#AWK=$(which awk)
-#[ -z ${AWK} ] && {
-#    echo "awk not found, exiting" 1>&2
-#    exit 1
-#}
+# awk
+AWK=$(which awk)
+[ -z ${AWK} ] && {
+    echo "awk not found, exiting" 1>&2
+    exit 1
+}
 
 # chromium
 CHROMIUM=$(which chromium)
@@ -60,6 +60,10 @@ CHROMIUM=$(which chromium)
     echo "chromium not found - displaying & printing the paperwallet may be broken on other browsers."
     echo "See https://www.chromium.org/Home for chromium info and download links."
 }
+
+# verus cli
+VERUS=$(which verus)
+# dont exit, may not be used at all
 
 ##
 # version info
@@ -76,30 +80,24 @@ print_version(){
 # ---
 ##
 print_usage(){
-    echo "Usage: paperwallet OPTIONS..."
-    echo "Generate a paperwallet using the specified options and output to a file."
+    echo "Usage: paperwallet OPTION... [FILE]..."
+    echo "Generate a Paperwallet using the specified options and output to FILE."
     echo ""
-    echo "NOTE: As of now, input is _NOT_ validated against a live verus daemon."
+    echo "As of now, input is _NOT_ validated against a live verus daemon, beware."
     echo ""
-    echo "With no --outfile specified the output will always be written to"
+    echo "With no FILE, or when FILE is -, output is sent to STDOUT."
     echo ""
-    echo "    \"${OUTFILE}\""
-    echo ""
-    echo "overwriting previous contents in the process. Unless you specify empty notes,"
-    echo "by using '--notes=\" \"' or '--notes \" \"' the default comment will be used:"
-    echo ""
-    printf "\"%q\"\n" "${NOTES}"
-    echo ""
-    echo "Only long options have (mandatory) arguments, --help and --version do not."
-    echo ""
+    echo "Only long options have (mandatory) arguments."
+    echo "  -d                                    get all info from verusd (specify only \"--address\"),"
+    echo "                                        also see --cli-command above"
     echo "  -e                                    disable encryption of private key"
-    echo "  --address ADDRESS                     primary address to use for paperwallet,"
-    echo "                                        supported are i, R and zs addresses."
+    echo "  --address ADDRESS                     primary address to use for paperwallet"
     echo "  --balance 12345.231132                balance to use for paperwallet"
+    echo "  --cli-command COMMAND                 path to verus commandline with needed options,"
+    echo "                                        defaults to trying to use 'verus' from the PATH"
     echo "  --key PRIVATEKEY                      private key to use for paperwallet"
     echo "  --notes NOTES                         shell escaped comment to put into paperwallet"
-    echo "  --outfile OUTFILE                     file to write resulting paperwallet to,"
-    echo "                                        defaults to ${OUTFILE}"
+    echo "  --outfile OUTFILE                     file to write resulting paperwallet to"
     echo "  --passphrase PASSPHRASE               passphrase to encrypt private key with"
     echo "  --verusid-friendlyname FRIENDLYNAME   friendlyname to display for verusid"
     echo "  --verusid-zaddress ZADDRESS           zaddress to display for verusid"
@@ -110,8 +108,8 @@ print_usage(){
     echo "  --help     display this help and exit"
     echo "  --version  output version information and exit"
     echo ""
-    echo "Verus online help:     <https://wiki.verus.io/>"
-    echo "Full documentation at: <https://github.com/BloodyNora/VerusPaperWallet/>"
+    echo "Documentation:     <https://github.com/BloodyNora/VerusPaperWallet/>"
+    echo "Verus online help: <https://wiki.verus.io/>"
     echo ""
     exit 1;
 }
@@ -123,8 +121,9 @@ print_usage(){
 # and https://bl.ocks.org/magnetikonline/22c1eb412daa350eeceee76c97519da8
 # and 'man 1 getopt'
 ##
-ARGUMENT_LIST="e"
+ARGUMENT_LIST="de"
 LONG_ARGUMENT_LIST=(
+    "cli-command"
     "notes"
     "address"
     "balance"
@@ -154,8 +153,15 @@ OPTIONS=$(getopt \
 eval set -- "${OPTIONS}"
 while true; do
     case "$1" in
+    -d)
+        MODE="daemon"
+        ;;
     -e)
         ENCRYPT_KEY=0
+        ;;
+    --cli-command)
+        shift;
+        VERUS="${1}"
         ;;
     --notes)
         shift;
@@ -290,36 +296,7 @@ paperwallet_verusid(){
     [ ${VERUSID_REQUIRED_SIGNATURES} -gt 1 ] && {
         NOTES="Required number of signatures for \"${VERUSID_FRIENDLYNAME}\": <b>${VERUSID_REQUIRED_SIGNATURES} ($(./num2words ${VERUSID_REQUIRED_SIGNATURES}))</b><br />${NOTES}"
     }
-    print_usage(){
-    echo "Usage: paperwallet OPTION... [FILE]..."
-    echo "Generate a Paperwallet using the specified options and output to FILE."
-    echo ""
-    echo "As of now, input is _NOT_ validated against a live verus daemon, beware."
-    echo ""
-    echo "With no FILE, or when FILE is -, output is sent to STDOUT."
-    echo ""
-    echo "Only long options have (mandatory) arguments."
-    echo "  -e                                    disable encryption of private key"
-    echo "  --address ADDRESS                     primary address to use for paperwallet"
-    echo "  --balance 12345.231132                balance to use for paperwallet"
-    echo "  --key PRIVATEKEY                      private key to use for paperwallet"
-    echo "  --notes NOTES                         shell escaped comment to put into paperwallet"
-    echo "  --outfile OUTFILE                     file to write resulting paperwallet to"
-    echo "  --passphrase PASSPHRASE               passphrase to encrypt private key with"
-    echo "  --verusid-friendlyname FRIENDLYNAME   friendlyname to display for verusid"
-    echo "  --verusid-zaddress ZADDRESS           zaddress to display for verusid"
-    echo "  --verusid-taddress TADDRESS           taddress(es) associated with verusid,"
-    echo "                                        specify multiple times if needed."
-    echo "  --verusid-required-signatures NUM     minimum number of signatures needed"
-    echo ""
-    echo "  --help     display this help and exit"
-    echo "  --version  output version information and exit"
-    echo ""
-    echo "Verus online help: <https://wiki.verus.io/>"
-    echo "Full documentation at: <https://github.com/BloodyNora/VerusPaperWallet/>"
-    echo ""
-    exit 1;
-}
+
    export CONTENT_BALANCE=""
     if [ ${SHOW_BALANCE} -eq 1 ]; then
         export CONTENT_BALANCE=$(paperwallet_balance "${BALANCE}")
@@ -350,6 +327,44 @@ case "${ADDRESS_TYPE}" in
         TEMPLATE="verusid"
         ;;
 esac
+
+[ "${MODE}" == "daemon" ] && {
+    [ -z "$(ps aux | grep [v]erusd | awk '{print $2}')" ] && {
+        echo "ERROR: no running verus daemon found. Exiting!"
+        exit 1
+    }
+    case "${ADDRESS_TYPE}" in
+        "i")
+            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | jq -r .isvalid 2>/dev/null)
+            [ "${ISVALID}" == "true" ] && {
+                VERUSID_REQUIRED_SIGNATURES=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | jq -r .balance 2>/dev/null)
+                VERUSID_FRIENDLYNAME="$(${VERUS} getidentity ${ADDRESS} | jq -r .identity.name)@"
+                NUMSIG=$(${VERUS} getidentity ${ADDRESS} | jq -r .identity.minimumsignatures 2>/dev/null)
+                VERUSID_TADDRESS=$(${VERUS} getidentity ${ADDRESS} | jq -rM .identity.primaryaddresses[] | xargs echo)
+                VERUSID_ZADDRESS=$(${VERUS} getidentity ${ADDRESS} | jq -rM .identity.privateaddress)
+            }
+            ;;
+        "R")
+            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | jq -r .isvalid 2>/dev/null)
+            [ "${ISVALID}" == "true" ] && {
+                BALANCE=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | jq -r .balance 2>/dev/null)
+                BALANCE=$(echo "scale=8;${BALANCE}/100000000" | bc)
+                KEY=$(${VERUS} dumpprivkey ${ADDRESS} 2>/dev/null)
+            }
+            ;;
+        "z")
+            ISVALID=$(${VERUS} z_validateaddress ${ADDRESS} | jq -r .isvalid 2>/dev/null)
+            [ "${ISVALID}" == "true" ] && {
+                BALANCE=$(${VERUS} z_getbalance ${ADDRESS} 2>/dev/null)
+                KEY=$(${VERUS} z_exportkey ${ADDRESS} 2>/dev/null)
+            }
+            ;;
+        *)
+            echo "ERROR: Unknown address type for ${ADDRESS}"
+            exit 1
+            ;;
+    esac
+}
 
 [ "${ENCRYPT_KEY}" -eq 1 ] && {
     [ -z "${PASSPHRASE}" ] && {
