@@ -6,8 +6,8 @@ html/tpl/old/*
 # vscode workspace
 Paperwallet.code-workspace
 
-# default output file
-out.html
+# all created html files within this directory
+*.html
 
 # output svg files
 html/svg/iADDR.svg
