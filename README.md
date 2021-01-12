@@ -1,22 +1,18 @@
 # Verus Paperwallet Generator
 
-Are you looking for the old paperwallet tool? See [here](https://github.com/BloodyNora/VerusPaperWallet.deprecated)!
+**Are you looking for the old paperwallet tool? See [here](https://github.com/BloodyNora/VerusPaperWallet.deprecated)!**
 
-**NOTE THAT THE `paperwallet` TOOL AND THIS DOCUMENTATION BELOW IS FEATURE INCOMPLETE, THUS WORK IN PROGRESS AND PROBABLY INCORRECT OR STATING STUFF THATS JUST NOT DONE YET. RELY ON `paperwallet --help` INSTEAD!**
-
-A Paperwallet generator in Bash script and GNU tools, outputting to styled HTML formatted like a bank account statement, meant to be laminated and stored in bank account statement folders. The Paperwallets can either be created in offline mode or by interfacing with `verusd` via RPC. 
-
-t- and z-Address generation is only supported when interfacing with `verusd` via RPC. The Paperwallet generator does not support creation of new Verus Identities, however information for already existing Verus Identities can be retrieved and exported.
+A Paperwallet generator in Bash script and GNU tools, outputting to styled HTML formatted like a bank account statement, meant to be laminated and stored in bank account statement folders. The Paperwallets can either be created in manual mode or by interfacing with `verusd` via RPC, dubbed `daemon` mode. Manual operation has the disadvantage of being unable to verify the input data.
 
 ## What is a Paperwallet?
 
-A Paperwallet is a paper copy of t-Addresses, z-Addresses, associated private keys and VerusID Information. A Paperwallet usually has a machine-readable representation of the address and private key data, often in form of a QR code. Private keys on Paperwallets can optionally be encrypted in one way or another.
+A Paperwallet is a paper copy of t-Addresses, z-Addresses, associated private keys or VerusID Information. A Paperwallet usually has a machine-readable representation of the address and private key data, often in form of a QR code. Private keys on Paperwallets can optionally be encrypted in one way or another.
 
-However, Paperwallets - even encrypted ones - are not ideal for uncontrolled storage. While a safe at home or a safe-deposit box in a bank vault should be reasonably secure, storing verbatim copies of Paperwallets with friends, family or anybody else is not recommended. FIXME: In that case, if a simple `z_exportwallet` is not enough, additionally just store the resulting Paperwallets as PDF documents on properly encrypted media and give away that instead.
+However, Paperwallets - even encrypted ones - are not ideal for uncontrolled storage. While a safe at home or a safe-deposit box in a bank vault should be reasonably secure, storing plain-text verbatim copies of Paperwallets with friends, family or anybody else is not recommended. In that case, either put the resulting file of a simple `z_exportwallet` call or the paperwallets in PDF format onto properly encrypted media and give away that instead.
 
 ## Why would i want a Paperwallet?
 
-Paperwallets are a machine-readable offline backup of handpicked Verus t- and z-Addresses and Verus Identities. Paperwallets can protect against data corruption and generally provide a safety net in case of computer or disk damage as well as brown- or blackout events. Addresses and Identities whose associated private keys are not imported into any computer or mobile wallet are effectively in "cold storage"; while any funds on them will not benefit from staking revenues, these funds and identities are practically exempt from electronic theft. 
+Paperwallets are a machine-readable (ideally offline) backup of handpicked Verus t- and z-Addresses and Verus Identities. Paperwallets can protect against data corruption and generally provide a safety net in case of computer or disk damage as well as brown- or blackout events. Addresses and Identities whose associated private keys are not imported into any computer or mobile wallet are effectively in "cold storage"; while any funds on them will not benefit from staking revenues, these funds and identities are practically exempt from electronic theft. 
 
 ## Why is this thing so bloody complicated and not just a browser tool like it used to be?
 
@@ -100,6 +96,16 @@ See below examples. For more options and the complete commandline option list re
 ./paperwallet --help
 ```
 
+### `daemon` Mode
+
+This requires a running `verusd` that has access to the Addresses and/or Identities you want to export to paperwallets. Just use a valid, local z-, t- or i-Address. For identities, you will need to determine your Identities' i-Address first. Then just do this:
+
+```bash
+./paperwallet -d \
+  --passphrase "In posterum veritas, in Verus sanitas!" \
+  --address RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W
+```
+
 ### z- & t-Address
 
 For z-Addresss, just replace the values in below example.
@@ -128,20 +134,34 @@ For multi-signature VerusIDs, just specify multiple instances of `--verusid-tadd
 
 ## Printing properly
 
+**TODO**
+
 ## Wiping data on the computer
 
+**TODO**
+
 ## Restoring from Paperwallets
+
+**TODO**
 
 1) Turn paperwallet into image file (scanner, camera)
 2) Use `zbarimg` to extract QRcode data
 
 ## Protection & Security
 
+**TODO**
+
 ### Physical damage, UV degradation
+
+**TODO**
 
 ### Unauthorized physical or logical access
 
+**TODO**
+
 ## Filing & long-term storage
+
+**TODO**
 
 ## Documentation for supplied/contrib tools
 
