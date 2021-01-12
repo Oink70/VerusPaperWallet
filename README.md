@@ -1,5 +1,7 @@
 # Verus Paperwallet Generator
 
+Are you looking for the old paperwallet tool? See [here](https://github.com/BloodyNora/VerusPaperWallet.deprecated)!
+
 **NOTE THAT THE `paperwallet` TOOL AND THIS DOCUMENTATION BELOW IS FEATURE INCOMPLETE, THUS WORK IN PROGRESS AND PROBABLY INCORRECT OR STATING STUFF THATS JUST NOT DONE YET. RELY ON `paperwallet --help` INSTEAD!**
 
 A Paperwallet generator in Bash script and GNU tools, outputting to styled HTML formatted like a bank account statement, meant to be laminated and stored in bank account statement folders. The Paperwallets can either be created in offline mode or by interfacing with `verusd` via RPC. 
