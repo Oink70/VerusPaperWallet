@@ -1,0 +1,209 @@
+/*@font-face {
+    font-family: 'Noto Color Emoji';
+    src: url(html/font/NotoColorEmoji.ttf);
+    src: url(https://gitcdn.xyz/repo/googlefonts/noto-emoji/master/fonts/NotoColorEmoji.ttf);
+}
+@font-face {
+    font-family: 'Noto Mono Regular';
+    src: url(html/font/NotoMono-Regular.ttf);
+}
+@import url('http://fonts.cdnfonts.com/css/noto-mono');*/
+
+body{
+    line-height: 1.2;    
+}
+
+page {
+    color: rgb(28, 28, 28);
+    display: block;
+    margin: 0 auto;
+    margin-bottom: 5mm;
+    /*box-shadow: 0 0 5mm rgba(49,101,212,0.5);*/
+    border-left: 1px solid rgba(49,101,212,0.5);
+    border-bottom: 1px solid rgba(49,101,212,0.5);
+    border-right: 1px solid rgba(49,101,212,0.5);
+}
+
+page[size="PWLT"][layout="landscape"] {
+    width: 220mm;
+    height: 100mm;  
+}
+
+page[size="PWLT-plain"][layout="landscape"] {
+    width: 220mm;
+    height: 200mm;  
+}
+
+@media print {
+    body, page {
+        /* top, right, bottom, left */
+        margin: 0mm 0mm 1mm 0mm;
+    }
+
+    page {
+        border-top: 1px solid rgba(49,101,212,0.5);
+        border-left: 1px solid rgba(49,101,212,0.5);
+        /*box-shadow: 1mm 1mm 1mm rgba(23, 23, 23, 0.5);*/
+    }
+}
+
+hr {
+    border: 0 none;
+    border-top: 1px dotted rgb(149, 149, 149);
+}
+
+table {
+    table-layout: fixed;
+    margin: 0 none;
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    font-size: 3.5mm;
+}
+
+tr>td:first-child{
+    vertical-align: top;
+}
+
+tr:last-child>td:last-child{
+    padding-top: 0.5mm;
+}
+
+tr:last-child {
+    height: 100% !important;
+}
+
+td {
+    margin: 0 none;
+    /* top, right, bottom, left */
+    padding: 0 1mm 0 1mm;
+}
+
+#td-notes, #td-notes_id {
+    text-align: left;
+    font-size: 3mm;
+    vertical-align: top;
+}
+
+.border-right  { border-right: 1px dashed rgb(28, 28, 28); }
+.border-bottom { border-bottom: 1px dashed rgb(28, 28, 28); }
+
+.row-dark  { background-color: rgba(212, 212, 212, 1); }
+.row-light { background-color: rgba(240, 240, 240, 1); }
+
+.font-geomanist     { font-family: G;   }
+.font-sourcecodepro { font-family: SC;  }
+.font-noto          { font-family: Noto Mono, Noto Color Emoji; }
+.font-sourcesanspro { font-family: SSP; }
+
+.font-size-20 { font-size: 2.0mm; }
+.font-size-25 { font-size: 2.5mm; }
+.font-size-30 { font-size: 3.0mm; } 
+.font-size-35 { font-size: 3.5mm; }
+.font-size-40 { font-size: 4.0mm; }
+.font-size-45 { font-size: 4.5mm; }
+.font-size-50 { font-size: 5.0mm; }
+
+.color-red   { color: rgb(212, 49, 62);}
+.color-green { color: rgb(74, 166, 88); }
+
+.sticker-height-15 { height: 15mm; }
+
+#binding-margin {
+    float: left;
+    width: 20mm;
+    border-right: 1px solid rgba(49,101,212,0.5);
+    border-top: 1px solid rgba(49,101,212,0.5);
+    height: 99.8mm;
+}
+
+#header {
+    background-color: rgb(49, 101, 212); 
+    color: rgb(255, 255, 255);
+    height: 10mm;
+    margin-left: 20mm;
+    /* top, right, bottom, left */
+    padding: 2mm 100mm 1mm 2mm;
+}
+
+#binding-margin, #key, #key_id, #addr, #addr_id{
+    background-color: #fff;
+}
+
+#notes, #notes_id{
+    background-color: rgba(212, 212, 212);
+}
+
+div#key > div#key-bottom > svg {
+    width: 50mm;
+    height: 50mm;
+}
+div#key > div#key-bottom > svg > g > path {
+    stroke: rgb(212, 49, 62) !important; 
+}
+
+div#addr > svg,
+div#addr_id > svg{
+    width: 40mm;
+    height: 40mm;
+}
+div#addr > svg > g > path,
+div#addr_id > svg > g > path{
+    stroke: rgb(74, 166, 88) !important;
+}
+
+div#key > div#key-bottom > div, 
+div#addr > div,
+div#addr_id > div {
+    text-align: justify; 
+    color: rgb(149, 149, 149);
+}
+
+#addr, #notes, #notes_id, #key, #addr_id {
+    float: left;
+    font-family: G;
+    font-size: 3mm;
+}
+
+#key, #addr, #addr_id {
+    height: 83mm;
+}
+
+#notes, #notes_id {
+    height: 87mm;
+}
+
+#addr, #addr_id, #key { 
+    padding: 2mm;
+}
+
+#addr, #addr_id{ width: 40mm; }
+#key, #key>#key_bottom { width: 50mm; }
+
+#notes, #notes_id {
+    background-color: rgb(212, 212, 212);
+}
+
+#notes{ width: 101.6mm; }
+#notes_id { width: 155.6mm; }
+
+#key, #key-bottom { text-align: right; }
+#key { position: relative; }
+
+#key-bottom {
+    position: absolute;
+    bottom: 1mm;
+    right: 2mm;
+    /* top, right, bottom, left */
+    padding: 0 0 0 2mm;
+}
+
+.punchhole {
+    text-align: center;
+    position: relative;
+}
+
+.punchhole-upper { top: 7.5mm; }
+.punchhole-lower { top: 82.5mm; }
+
+/* EOF */

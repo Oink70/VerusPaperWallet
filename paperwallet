@@ -1,0 +1,384 @@
+#!/bin/bash
+##
+# paperwallet generator
+# ---
+##  
+
+##
+# defaults
+##
+
+# show balance in figures
+SHOW_BALANCE=0
+
+# show balance in words
+SHOW_BALANCE_WORDS=1
+
+# encrypt private keys
+ENCRYPT_KEY=1
+
+# prepopulate the variable
+VERUSID_REQUIRED_SIGNATURES=1
+
+# default notes
+NOTES=In\ posterum\ veritas\ \&ndash\;\ in\ \<span\ class=\"font-size-35\ font-sourcesanspro\"\>verus\</span\>\ sanitas.
+
+# default qrencode options, FFFFFF00 -> white with 0 alpha (thus transparent).
+QRENCODE_OPTIONS="-tSVG -lM --svg-path --rle -m0 --background=FFFFFF00"
+
+# default output file
+OUTFILE="./out.html"
+
+##
+# check prerequisites
+##
+
+# qrencode
+QRENCODE=$(which qrencode)
+[ -z ${QRENCODE} ] && {
+    echo "qrencode not found, exiting"
+    exit 1
+}
+
+# openssl
+OPENSSL=$(which openssl)
+[ -z ${OPENSSL} ] && {
+    echo "openssl not found, exiting" 1>&2
+    exit 1
+}
+
+## awk
+#AWK=$(which awk)
+#[ -z ${AWK} ] && {
+#    echo "awk not found, exiting" 1>&2
+#    exit 1
+#}
+
+# chromium
+CHROMIUM=$(which chromium)
+[ -z ${CHROMIUM} ] && {
+    echo "chromium not found - displaying & printing the paperwallet may be broken on other browsers."
+    echo "See https://www.chromium.org/Home for chromium info and download links."
+}
+
+##
+# version info
+# ---
+##
+print_version(){
+    echo "Verus Paper Wallet ALPHA"
+    echo "(c) 2021 ff. 0x03/BloodyNora"
+    exit 1
+}
+
+##
+# usage notice
+# ---
+##
+print_usage(){
+    echo "Usage: paperwallet OPTIONS..."
+    echo "Generate a paperwallet using the specified options and output to a file."
+    echo ""
+    echo "NOTE: As of now, input is _NOT_ validated against a live verus daemon."
+    echo ""
+    echo "With no --outfile specified the output will always be written to"
+    echo ""
+    echo "    \"${OUTFILE}\""
+    echo ""
+    echo "overwriting previous contents in the process. Unless you specify empty notes,"
+    echo "by using '--notes=\" \"' or '--notes \" \"' the default comment will be used:"
+    echo ""
+    printf "\"%q\"\n" "${NOTES}"
+    echo ""
+    echo "Only long options have (mandatory) arguments, --help and --version do not."
+    echo ""
+    echo "  -e                                    disable encryption of private key"
+    echo "  --address ADDRESS                     primary address to use for paperwallet,"
+    echo "                                        supported are i, R and zs addresses."
+    echo "  --balance 12345.231132                balance to use for paperwallet"
+    echo "  --key PRIVATEKEY                      private key to use for paperwallet"
+    echo "  --notes NOTES                         shell escaped comment to put into paperwallet"
+    echo "  --outfile OUTFILE                     file to write resulting paperwallet to,"
+    echo "                                        defaults to ${OUTFILE}"
+    echo "  --passphrase PASSPHRASE               passphrase to encrypt private key with"
+    echo "  --verusid-friendlyname FRIENDLYNAME   friendlyname to display for verusid"
+    echo "  --verusid-zaddress ZADDRESS           zaddress to display for verusid"
+    echo "  --verusid-taddress TADDRESS           taddress(es) associated with verusid,"
+    echo "                                        specify multiple times if needed."
+    echo "  --verusid-required-signatures NUM     minimum number of signatures needed"
+    echo ""
+    echo "  --help     display this help and exit"
+    echo "  --version  output version information and exit"
+    echo ""
+    echo "Verus online help:     <https://wiki.verus.io/>"
+    echo "Full documentation at: <https://github.com/BloodyNora/VerusPaperWallet/>"
+    echo ""
+    exit 1;
+}
+
+##
+# getopt
+# ---
+# see https://dustymabe.com/2013/05/17/easy-getopt-for-a-bash-script/
+# and https://bl.ocks.org/magnetikonline/22c1eb412daa350eeceee76c97519da8
+# and 'man 1 getopt'
+##
+ARGUMENT_LIST="e"
+LONG_ARGUMENT_LIST=(
+    "notes"
+    "address"
+    "balance"
+    "verusid-friendlyname"
+    "verusid-zaddress"
+    "verusid-taddress"
+    "verusid-required-signatures"
+    "key"
+    "passphrase"
+    "outfile"
+)
+
+# read arguments
+OPTIONS=$(getopt \
+    --longoptions "$(printf "%s:," "${LONG_ARGUMENT_LIST[@]}")",version,help \
+    --name "$(basename "$0")" \
+    --options "${ARGUMENT_LIST}" \
+    -- "$@"
+)
+
+# if getopt returns 0 sum ting wong
+[ ${?} -eq 0 ] || { 
+    echo "Invalid options given, exiting."
+    exit 1
+}
+
+eval set -- "${OPTIONS}"
+while true; do
+    case "$1" in
+    -e)
+        ENCRYPT_KEY=0
+        ;;
+    --notes)
+        shift;
+        NOTES="${1}"
+        ;;
+    --address)
+        shift;
+        ADDRESS="${1}"
+        ;;
+    --balance)
+        shift;
+        # https://unix.stackexchange.com/questions/465583/what-does-cut-return-if-the-specified-field-does-not-exist
+        SHOW_BALANCE=1
+        BALANCE="${1}.0"
+        ;;
+    --key)
+        shift;
+        KEY="${1}"
+        ;;
+    --passphrase)
+        shift;
+        PASSPHRASE="${1}"
+        ;;
+    --outfile)
+        shift;
+        OUTFILE="${1}"
+        ;;
+    --verusid-friendlyname)
+        shift;
+        VERUSID_FRIENDLYNAME="${1}"
+        ;;
+    --verusid-zaddress)
+        shift;
+        VERUSID_ZADDRESS="${1}"
+        ;;
+    --verusid-taddress)
+        shift;
+        VERUSID_TADDRESS="${VERUSID_TADDRESS} ${1}"
+        VERUSID_TADDRESS=$(echo ${VERUSID_TADDRESS}|xargs)
+        ;;
+    --verusid-required-signatures)
+        shift;
+        VERUSID_REQUIRED_SIGNATURES=${1}
+        ;;
+    --version)
+        print_version
+        exit 1
+        ;;
+    --help)
+        print_usage
+        exit 1
+        ;;    
+    --)
+        shift
+        break
+        ;;
+    esac
+    shift
+done
+
+[ -z "${ADDRESS}" ] && { 
+    echo "No address specified, exiting."
+    exit 0;
+}
+
+#echo "SHOW_BALANCE: ${SHOW_BALANCE}"
+#echo "SHOW_BALANCE_WORDS: ${SHOW_BALANCE_WORDS}"
+#echo "ENCRYPT_KEY: ${ENCRYPT_KEY}"
+#echo "ADDRESS: ${ADDRESS}"
+#echo "KEY: ${KEY}"
+#echo "NOTES: ${NOTES}"
+#echo "VERUSID_FRIENDLYNAME: ${VERUSID_FRIENDLYNAME}"
+#echo "VERUSID_ZADDRESS: ${VERUSID_ZADDRESS}"
+#echo "VERUSID_TADDRESS: $(echo ${VERUSID_TADDRESS})"
+
+#qrencode -tSVG --svg-path --rle -m0 --background=ffffff00 --foreground=4aa658ff -o ADDR.svg "RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W"
+#qrencode -tSVG --svg-path --rle -m0 --background=ffffff00 --foreground=d4313eff -o KEY.svg "Uqu4wkVekqnTCwR9SfrP6vmbFrt4D8stLC8EJG2FsqvcREHboiYL"
+
+get_qr_svg(){
+    STRING="${1}"
+    QRCODE=$(${QRENCODE} ${QRENCODE_OPTIONS} -o- "${STRING}")
+    echo "${QRCODE}"
+}
+
+paperwallet_balance(){
+    BALANCE="${1}"
+    BALANCE_INT=$(echo ${BALANCE} | cut -d'.' -f1)
+    export BALANCE_DEC=$(echo ${BALANCE} | cut -d'.' -f2)
+    export BALANCE_TEXT="$(./num2words "${BALANCE_INT}")"
+    export BALANCE_INT=$(printf "%'.f" ${BALANCE_INT})
+    CONTENT_BALANCE=$(envsubst < html/tpl/balance.tpl )
+    echo "${CONTENT_BALANCE}"
+}
+
+paperwallet(){
+    export ADDRESS="${1}"
+    export KEY="${2}"
+    export BALANCE="${3}"
+    export NOTES="${4}"
+    SHOW_BALANCE=${5}
+    export TEMPLATE="${6}"
+    export DATE="$(date '+%F %T %Z')"
+    export SVG_KEY=$(get_qr_svg "${KEY}")
+    export SVG_ADDRESS=$(get_qr_svg "${ADDRESS}")
+
+    
+
+   export CONTENT_BALANCE=""
+    if [ ${SHOW_BALANCE} -eq 1 ]; then
+        export CONTENT_BALANCE=$(paperwallet_balance "${BALANCE}")
+    fi
+
+    
+    echo "$(envsubst < html/tpl/${TEMPLATE}.tpl)"
+}
+
+#paperwallet_verusid "${ADDRESS}" "${VERUSID_FRIENDLYNAME}" "${VERUSID_ZADDRESS}" "${VERUSID_TADDRESS}" "${VERUSID_REQUIRED_SIGNATURES}" "${NOTES}" "${BALANCE}" ${SHOW_BALANCE}
+paperwallet_verusid(){
+    export ADDRESS="${1}"
+    export VERUSID_FRIENDLYNAME="${2}"
+    export VERUSID_ZADDRESS="${3}"
+    export VERUSID_TADDRESS=$(echo "${4}" | sed -s 's/ /, /g')
+    export VERUSID_REQUIRED_SIGNATURES=${5}
+    export NOTES="${6}"
+    export BALANCE="${7}"
+    SHOW_BALANCE=${8}
+    export DATE="$(date '+%F %T %Z')"
+    export SVG_VERUSID=$(get_qr_svg "${ADDRESS}")
+
+
+    # add number of signatures to comment if > 1
+    [ ${VERUSID_REQUIRED_SIGNATURES} -gt 1 ] && {
+        NOTES="Required number of signatures for \"${VERUSID_FRIENDLYNAME}\": <b>${VERUSID_REQUIRED_SIGNATURES} ($(./num2words ${VERUSID_REQUIRED_SIGNATURES}))</b><br />${NOTES}"
+    }
+    print_usage(){
+    echo "Usage: paperwallet OPTION... [FILE]..."
+    echo "Generate a Paperwallet using the specified options and output to FILE."
+    echo ""
+    echo "As of now, input is _NOT_ validated against a live verus daemon, beware."
+    echo ""
+    echo "With no FILE, or when FILE is -, output is sent to STDOUT."
+    echo ""
+    echo "Only long options have (mandatory) arguments."
+    echo "  -e                                    disable encryption of private key"
+    echo "  --address ADDRESS                     primary address to use for paperwallet"
+    echo "  --balance 12345.231132                balance to use for paperwallet"
+    echo "  --key PRIVATEKEY                      private key to use for paperwallet"
+    echo "  --notes NOTES                         shell escaped comment to put into paperwallet"
+    echo "  --outfile OUTFILE                     file to write resulting paperwallet to"
+    echo "  --passphrase PASSPHRASE               passphrase to encrypt private key with"
+    echo "  --verusid-friendlyname FRIENDLYNAME   friendlyname to display for verusid"
+    echo "  --verusid-zaddress ZADDRESS           zaddress to display for verusid"
+    echo "  --verusid-taddress TADDRESS           taddress(es) associated with verusid,"
+    echo "                                        specify multiple times if needed."
+    echo "  --verusid-required-signatures NUM     minimum number of signatures needed"
+    echo ""
+    echo "  --help     display this help and exit"
+    echo "  --version  output version information and exit"
+    echo ""
+    echo "Verus online help: <https://wiki.verus.io/>"
+    echo "Full documentation at: <https://github.com/BloodyNora/VerusPaperWallet/>"
+    echo ""
+    exit 1;
+}
+   export CONTENT_BALANCE=""
+    if [ ${SHOW_BALANCE} -eq 1 ]; then
+        export CONTENT_BALANCE=$(paperwallet_balance "${BALANCE}")
+    fi
+
+    export CONTENT_WALLET=$(envsubst < html/tpl/verusid.tpl)
+    echo "${CONTENT_WALLET}"
+}
+
+create_html_paperwallet(){
+    SCAFFOLD="${1}"
+    export CONTENT="${2}"
+    OUTFILE="${3}"
+
+    envsubst < "${SCAFFOLD}" > "${OUTFILE}"
+}
+
+ADDRESS_TYPE=$(echo ${ADDRESS} | cut -c1)
+
+case "${ADDRESS_TYPE}" in
+    "R")
+        TEMPLATE="t-encrypted"
+        ;;
+    "z")
+        TEMPLATE="z-encrypted"
+        ;;
+    "i")
+        TEMPLATE="verusid"
+        ;;
+esac
+
+[ "${ENCRYPT_KEY}" -eq 1 ] && {
+    [ -z "${PASSPHRASE}" ] && {
+        echo "Encryption requested but no passphrase set. exiting."
+        exit 1
+    }
+
+    KEY=$(echo "${KEY}" | ${OPENSSL} enc -e -aes-256-cbc -a -salt -pbkdf2 -A -k "${PASSPHRASE}")
+} || {
+    case "${ADDRESS_TYPE}" in
+    "R")
+        TEMPLATE="t-plain"
+        ;;
+    "z")
+        TEMPLATE="z-plain"
+        ;;
+esac
+}
+
+case "${TEMPLATE}" in
+    "verusid")
+        PAPERWALLET_SOURCE="$(paperwallet_verusid "${ADDRESS}" "${VERUSID_FRIENDLYNAME}" "${VERUSID_ZADDRESS}" "${VERUSID_TADDRESS}" "${VERUSID_REQUIRED_SIGNATURES}" "${NOTES}" "${BALANCE}" ${SHOW_BALANCE})"
+        ;;
+    *)
+        PAPERWALLET_SOURCE="$(paperwallet "${ADDRESS}" "${KEY}" "${BALANCE}" "${NOTES}" ${SHOW_BALANCE} "${TEMPLATE}")"
+        ;;
+esac
+
+create_html_paperwallet "html/tpl/paperwallet.tpl" "${PAPERWALLET_SOURCE}" "${OUTFILE}"
+
+
+# EOF

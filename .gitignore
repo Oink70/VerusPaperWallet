@@ -1,0 +1,19 @@
+# test data
+addr.txt
+cheatsheet.md
+html/tpl/old/*
+
+# vscode workspace
+Paperwallet.code-workspace
+
+# default output file
+out.html
+
+# output svg files
+html/svg/iADDR.svg
+html/svg/ADDR.svg
+html/svg/zADDR.svg
+html/svg/KEY.svg
+html/svg/KEY-enc.svg
+html/svg/zKEY.svg
+html/svg/zKEY-enc.svg

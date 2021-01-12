@@ -1,0 +1,69 @@
+#!/bin/bash
+##
+# genphrase
+# ---
+# generate an arbitrarily long passphrase from a wordlist
+##
+
+##
+# get_random()
+# ---
+# get random number within boundaries
+#
+# $1: lower boundary
+# $2: upper boundary
+# $3: number of results
+##
+get_random(){
+	shuf -i ${1}-${2} -n ${3}
+	return 0
+}
+
+##
+# get_word_from_wordlist
+# ---
+# get a random word from a wordlist file having 1 word per line
+#
+# $1: path to dictionary
+##
+get_word_from_wordlist(){
+	LINES=$(wc -l ${1} | cut -d ' ' -f1)
+	head -n $(get_random 1 ${LINES} 1) ${1} | tail -n1 - | tr '[:upper:]' '[:lower:]'
+}
+
+##
+# usage
+# ---
+# prints usage notice
+##
+usage(){
+	echo "USAGE: ${1} <words> <wordlist>"
+	echo "ex.: ${1} 16 ./words.txt"
+}
+
+##
+# check that ${1} is a numerical value
+# otherwise exit
+##
+NUM='^[0-9]+$'
+if ! [[ ${1} =~ $NUM ]] ; then
+	echo "ERROR: non-numerical value specified."
+	usage ${0}
+	exit 1
+fi
+
+if ! [[ -f "${2}" ]]; then
+	echo "ERROR: wordlist file not found or not given."
+	usage ${0}
+	exit 1
+fi
+
+##
+# generate passphrase with specified number of words
+##
+for i in `seq 1 ${1}`; do
+	echo -n "$(get_word_from_wordlist ${2}) "
+done
+echo
+
+# EOF
