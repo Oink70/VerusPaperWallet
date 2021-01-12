@@ -378,6 +378,7 @@ esac
         echo "Encryption requested but no passphrase set. exiting."
         exit 1
     fi
+    # counter: ${OPENSSL} enc -d -aes-256-cbc -a -salt -pbkdf2 -A -k "${PASSPHRASE}"
     KEY=$(echo "${KEY}" | ${OPENSSL} enc -e -aes-256-cbc -a -salt -pbkdf2 -A -k "${PASSPHRASE}")
 } || {
     case "${ADDRESS_TYPE}" in
@@ -400,6 +401,5 @@ case "${TEMPLATE}" in
 esac
 
 create_html_paperwallet "html/tpl/paperwallet.tpl" "${PAPERWALLET_SOURCE}" "${OUTFILE}"
-
 
 # EOF
