@@ -4,6 +4,8 @@
 
 A Paperwallet generator in Bash script and GNU tools, outputting to styled HTML formatted like a bank account statement, meant to be laminated and stored in bank account statement folders. The Paperwallets can either be created in manual mode or by interfacing with `verusd` via RPC, dubbed `daemon` mode. Manual operation has the disadvantage of being unable to verify the input data.
 
+It is strongly advised that you read this document from start to finish once before doing anything.
+
 ## What is a Paperwallet, why would i want it?
 
 A Paperwallet is a paper copy of t-Addresses, z-Addresses, associated private keys or VerusID Information. A Paperwallet usually has a machine-readable representation of the address and private key data, often in form of a QR code. Private keys on Paperwallets can optionally be encrypted in one way or another. 
@@ -119,7 +121,7 @@ For z-Addresss, just replace the values in below example.
 
 **NOTE:** This does not verify the specified data further than very basic sanity checks. 
 
-For multi-signature VerusIDs, just specify multiple instances of `--verusid-taddress` on your commandline and add the respective number of minimum signatures needed using `--verusid-required-signatures`.
+For multi-signature VerusIDs, just specify multiple instances of `--verusid-taddress` on your commandline and add the respective number of minimum signatures needed using `--verusid-required-signatures` which will end up in the `Notes` section of the paperwallet. Note that the number of signatures will *only* show up  if that number is greater than `1`.
 
 ```bash
 ./paperwallet \
@@ -134,34 +136,44 @@ For multi-signature VerusIDs, just specify multiple instances of `--verusid-tadd
 
 **TODO**
 
-## Wiping data on the computer
-
-**TODO**
-
-On GNU/Linux systems with `coreutils` installed, you can use the `shred(1)` utility to properly overwrite files before erasing them. See `man 1 shred` for more information.
-
 ## Restoring from Paperwallets
 
 **TODO**
 
 1) Turn paperwallet into image file (scanner, camera)
 2) Use `zbarimg` to extract QRcode data
+3) *(optionally) Use `openssl` to decrypt the resulting private key if paperwallet was encrypted*
+4) Import resulting private key into litemode (t-Addresses) or native mode (z-Addresses and VerusIDs)
 
 ## Protection & Security
 
-**TODO**
+This section talks about some possible damage and attack vectors and how to protect against them. This document can in no way list all possibilities in which a paperwallet could be compromised or damaged, it is **MANDATORY** that you use common sense!
 
 ### Physical damage, UV degradation
 
-**TODO**
+Liquids and UV radiation are easily your paperwallets' greatest "natural" enemies. You should **definitely** laminate your paperwallets **using UV-resistant laminating pouches**. Laminators and proper laminating pouches are easily found everywhere around the internet.
 
-### Unauthorized physical or electronic access
+Remember to store them in a fire-proof location.
 
-**TODO**
+### Unauthorized physical access
+
+Storing paperwallets - even encrypted ones - with friends and family certainly is less than ideal. If you absolutely have to do so and want to use nicely formatted paperwallets instead of just putting the output of `z_exportwallet` **onto encrypted media**, just use a browser to create PDFs from the resulting HTML paper wallets, put them next to the `z_exportwallet` **onto encrypted media** and give that away instead.
+
+Storing plain-text printed paperwallets locally also can be a bad idea! 
+
+1) Unencrypted paperwallet templates have a foldover-section (beware with Laminators) which you are supposed to fold over the front face side of the paperwallet, folding the noise pattern to the inside. The noise pattern isn't for optics, but for decreased visibility in high-light conditions.
+2) If you have to use a Laminator (which you should) you can seperate the noise pattern from the paperwallet slip, laminate both seperately and glue them together with some seal tape.
+3) Additionally, you can get "scratch off label" stickers (remember these lottery tickets or the slip your bank card PIN comes printed on?). The size of the private key QRcode is purposefully chosen to adhere to the maximum reasonably available sticker size considering the general output format.
+
+### Unauthorized electronic access
+
+To protect against electronic access, it is mandatory that you wipe any residue of your generated paperwallets or copies of the input data (**BE CAREFUL WITH THAT, YOU COULD KILL YOUR WALLET IF YOU ACT CARELESSLY**)
+
+On GNU/Linux systems with `coreutils` installed, you can use the `shred(1)` utility to properly overwrite files before erasing them. See `man 1 shred` for more information.
 
 ## Filing & long-term storage
 
-**TODO**
+Just get a "bank account statement" folder, these can be bought everywhere around the internet. Make use of the pre-marked punch-out holes and file your laminated paperwallets nicely in that folder.
 
 ## Documentation for supplied/contrib tools
 
