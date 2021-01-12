@@ -94,6 +94,7 @@ print_usage(){
     echo "by using '--notes=\" \"' or '--notes \" \"' the default comment will be used:"
     echo ""
     echo "Only long options have (mandatory) arguments."
+    echo "  -b                                    toggle balance display"
     echo "  -d                                    get all info from verusd (specify only \"--address\"),"
     echo "                                        also see --cli-command below"
     echo "  -e                                    disable encryption of private key"
@@ -128,7 +129,7 @@ print_usage(){
 # and https://bl.ocks.org/magnetikonline/22c1eb412daa350eeceee76c97519da8
 # and 'man 1 getopt'
 ##
-ARGUMENT_LIST="de"
+ARGUMENT_LIST="bde"
 LONG_ARGUMENT_LIST=(
     "cli-command"
     "notes"
@@ -160,6 +161,9 @@ OPTIONS=$(getopt \
 eval set -- "${OPTIONS}"
 while true; do
     case "$1" in
+    -b)
+        SHOW_BALANCE=1
+        ;;
     -d)
         MODE="daemon"
         ;;
