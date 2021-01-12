@@ -171,13 +171,13 @@ Storing paperwallets - even encrypted ones - with friends and family certainly i
 
 Storing plain-text printed paperwallets locally also can be a bad idea! 
 
-1) Unencrypted paperwallet templates have a foldover-section (beware with Laminators) which you are supposed to fold over the front face side of the paperwallet, folding the noise pattern to the inside. The noise pattern isn't for optics, but for decreased visibility in high-light conditions.
+1) Unencrypted paperwallet templates have a foldover-section (beware with Laminators) which you are supposed to fold over the front face side of the paperwallet, folding the noise pattern to the inside. The noise pattern isn't for optics, but for decreased readability.
 2) If you have to use a Laminator (which you should) you can seperate the noise pattern from the paperwallet slip, laminate both seperately and glue them together with some seal tape.
 3) Additionally, you can get "scratch off label" stickers (remember these lottery tickets or the slip your bank card PIN comes printed on?). The size of the private key QRcode is purposefully chosen to adhere to the maximum reasonably available sticker size considering the general output format.
 
 ### Unauthorized electronic access
 
-To protect against electronic access, it is mandatory that you wipe any residue of your generated paperwallets or copies of the input data (**BE CAREFUL WITH THAT, YOU COULD KILL YOUR WALLET IF YOU ACT CARELESSLY**)
+To protect against electronic access, it is mandatory that you wipe any residue of your generated paperwallets or copies of the input data. That also includes the generated SVG images in `html/svg/` - leave the `logo.svg` intact. **BE CAREFUL WITH THAT, YOU COULD KILL YOUR WALLET IF YOU ACT CARELESSLY!**
 
 On GNU/Linux systems with `coreutils` installed, you can use the `shred(1)` utility to properly overwrite files before erasing them. See `man 1 shred` for more information.
 
