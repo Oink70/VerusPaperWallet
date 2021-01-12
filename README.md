@@ -4,15 +4,11 @@
 
 A Paperwallet generator in Bash script and GNU tools, outputting to styled HTML formatted like a bank account statement, meant to be laminated and stored in bank account statement folders. The Paperwallets can either be created in manual mode or by interfacing with `verusd` via RPC, dubbed `daemon` mode. Manual operation has the disadvantage of being unable to verify the input data.
 
-## What is a Paperwallet?
+## What is a Paperwallet, why would i want it?
 
-A Paperwallet is a paper copy of t-Addresses, z-Addresses, associated private keys or VerusID Information. A Paperwallet usually has a machine-readable representation of the address and private key data, often in form of a QR code. Private keys on Paperwallets can optionally be encrypted in one way or another.
+A Paperwallet is a paper copy of t-Addresses, z-Addresses, associated private keys or VerusID Information. A Paperwallet usually has a machine-readable representation of the address and private key data, often in form of a QR code. Private keys on Paperwallets can optionally be encrypted in one way or another. 
 
-However, Paperwallets - even encrypted ones - are not ideal for uncontrolled storage. While a safe at home or a safe-deposit box in a bank vault should be reasonably secure, storing plain-text verbatim copies of Paperwallets with friends, family or anybody else is not recommended. In that case, either put the resulting file of a simple `z_exportwallet` call or the paperwallets in PDF format onto properly encrypted media and give away that instead.
-
-## Why would i want a Paperwallet?
-
-Paperwallets are a machine-readable (ideally offline) backup of handpicked Verus t- and z-Addresses and Verus Identities. Paperwallets can protect against data corruption and generally provide a safety net in case of computer or disk damage as well as brown- or blackout events. Addresses and Identities whose associated private keys are not imported into any computer or mobile wallet are effectively in "cold storage"; while any funds on them will not benefit from staking revenues, these funds and identities are practically exempt from electronic theft. 
+Paperwallets are a machine-readable backup of handpicked Verus t- and z-Addresses and Verus Identities. Paperwallets can protect against data corruption and generally provide a safety net in case of computer or disk damage as well as brown- or blackout events, or plain data loss. Addresses and Identities whose associated private keys are not imported into any computer or mobile wallet are effectively in "cold storage"; while any funds on them will not benefit from staking revenues, these funds and identities are practically exempt from electronic theft. 
 
 ## Why is this thing so bloody complicated and not just a browser tool like it used to be?
 
@@ -20,9 +16,11 @@ Sadly, often times safety and useability don't mix very well. You will have to c
 
 Also, the old paperwallet tool didn't support anything but t-Addresses and overall made it too easy for a careless user to leak his paperwallet data to a number of parties.
 
-## Suppported types of Paperwallets
+A way to run this on windows - either natively or using something like Docker - is actively being worked. on.
 
-All Paperwallet types share these properties:
+## Paperwallet types and their properties
+
+All Paperwallet types share these common properties:
 
   * Left binding margin w/ pre-marked punch-out holes
   * Date & time of document creation
@@ -37,16 +35,12 @@ This Paperwallet type has one t-Address as well as the WIF private key associate
   * tAddress
   * WIF private key
 
-  t-Addresses and in turn t-Paperwallets also can be generated automatically in a semi-random fashion by generating an arbitarily long passphrase using a supplied passphrase generator script and dictionary file. The resulting passphrase is then fed to the `convertpassphrase` API call of `verusd`, using the tAddress and WIF private key from the response to generate a Paperwallet.
-
 ### z-Address
 
 This Paperwallet type has one z-Address as well as the `secret-extended-key` associated with that z-Address:
 
   * zAddress
   * `secret-extended-key`
-
-  Note that for z-Addresses the Paperwallet generator just relies on the `z_getnewaddress` API call of `verusd` to generate new zAddresses, further randomization seeding is not possible there. However, z-Addresses and in turn z-Paperwallets can be generated automatically.
 
 ### VerusID
 
@@ -61,13 +55,13 @@ This Paperwallet type is  meant to be an addition to one z-Address and one or mo
 
 Instead of [`BIP0038`](https://github.com/bitcoin/bips/blob/master/bip-0038.mediawiki) which sadly also lacks support for zAddresses, OpenSSL is used as a more generic approach to (optional but highly recommended) data encryption. Please note that Paperwallet encryption only makes sense for t- and z-Addresses and thus is not supported for the VerusID template. 
 
-**You are highly encouraged to encrypt all your t- and z-Paperwallets! Remember to use safe passphrases with at least 16 different words!**
+**You are highly encouraged to encrypt all your t- and z-Paperwallets! Remember to use safe passphrases with at least 16 different words! See the supplied `passphrase` tool and the section on it below if needed.**
 
 ## Prerequisites
 
 The Verus Paperwallet generator incooperates different bits and pieces, some on board, some of which need to be preinstalled. As per usual, this guide is tailored to and has been tested on [`Debian 10 (Buster)`](https://debian.org) and thus should work on derivatives like Devuan or Ubuntu almost exactly the same. 
 
-A running and fully synced mainnet Verus daemon to get your data from is the most important prerequisite. A default `verusd` config and (if desired) the `wallet.dat` file you want to generate Paperwallets off will do, however you can also start with a fresh wallet and generate Paperwallets off that as you go. The `verusd` RPC interface must be enabled and accessible in both cases.
+For daemon mode, a running and fully synced Verus daemon to get your data from is the most important prerequisite. A default `verusd` config and the `wallet.dat` file you want to generate Paperwallets off will do. The `verusd` RPC interface must be enabled and accessible, the `verus` CLI binary must be in the `${PATH}` variable of your terminal session.
 
 Besides that, update your software and install the required packages as shown in the snippet below. 
 
@@ -106,7 +100,9 @@ This requires a running `verusd` that has access to the Addresses and/or Identit
   --address RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W
 ```
 
-### z- & t-Address
+### Manual: z- & t-Address
+
+**NOTE:** This does not verify the specified data further than very basic sanity checks. 
 
 For z-Addresss, just replace the values in below example.
 
@@ -119,7 +115,9 @@ For z-Addresss, just replace the values in below example.
 
 **I STRONGLY ADVISE AGAINST EVER DOING THAT,** but if you want to have plaintext instead of encrypted paperwallets, omit the `--passphrase` parameter and add `-e` to the commandline options instead.
 
-### VerusID
+### Manual: VerusID
+
+**NOTE:** This does not verify the specified data further than very basic sanity checks. 
 
 For multi-signature VerusIDs, just specify multiple instances of `--verusid-taddress` on your commandline and add the respective number of minimum signatures needed using `--verusid-required-signatures`.
 
@@ -140,6 +138,8 @@ For multi-signature VerusIDs, just specify multiple instances of `--verusid-tadd
 
 **TODO**
 
+On GNU/Linux systems with `coreutils` installed, you can use the `shred(1)` utility to properly overwrite files before erasing them. See `man 1 shred` for more information.
+
 ## Restoring from Paperwallets
 
 **TODO**
@@ -155,7 +155,7 @@ For multi-signature VerusIDs, just specify multiple instances of `--verusid-tadd
 
 **TODO**
 
-### Unauthorized physical or logical access
+### Unauthorized physical or electronic access
 
 **TODO**
 
@@ -174,9 +174,9 @@ genphrase 16 ./words.txt
 logwood posthexaplar stoechas fiddleback holey antirationally pelvis galloman periopis scarabaeiform vermiformous rebeller sawneys unreturnable insensately hydrogenium
 ```
 
-### Dictionary file
+#### Dictionary file
 
-The dictionary file has been taken from [here](https://github.com/dwyl/english-words). Feel free to replace `words.txt` with any other text file of your choice containing 1 word per line.
+The dictionary file supplied to use with the `passphrase` tool has been taken from [here](https://github.com/dwyl/english-words). Feel free to replace `words.txt` with any other text file of your choice containing 1 word per line.
 
 ### `num2words`
 
