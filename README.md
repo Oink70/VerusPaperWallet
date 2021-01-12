@@ -102,7 +102,7 @@ This requires a running `verusd` that has access to the Addresses and/or Identit
   --address RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W
 ```
 
-### Manual: z- & t-Address
+### manually: z- & t-Address
 
 **NOTE:** This does not verify the specified data further than very basic sanity checks. 
 
@@ -117,7 +117,7 @@ For z-Addresss, just replace the values in below example.
 
 **I STRONGLY ADVISE AGAINST EVER DOING THAT,** but if you want to have plaintext instead of encrypted paperwallets, omit the `--passphrase` parameter and add `-e` to the commandline options instead.
 
-### Manual: VerusID
+### manually: VerusID
 
 **NOTE:** This does not verify the specified data further than very basic sanity checks. 
 
@@ -134,16 +134,26 @@ For multi-signature VerusIDs, just specify multiple instances of `--verusid-tadd
 
 ## Printing properly
 
-**TODO**
+Generally, (color) **laser printers will give massively superiour** results over using inkjet technology. Don't cheap out on ink or toner, disable `draft mode` in the printer driver. Obviously, higher quality paper will be useful for longevity, but with inkjet printouts, the paper quality is about 100x more important than with laser printouts.
+
+Greyscale instead of color works fine, too.
+
+Other than that just keep in mind that your printer may require a margin set in the page setup of `chromium`.
 
 ## Restoring from Paperwallets
 
-**TODO**
+These are just rough basic instructions, a more automatic restore tool will soon follow.
 
 1) Turn paperwallet into image file (scanner, camera)
 2) Use `zbarimg` to extract QRcode data
 3) *(optionally) Use `openssl` to decrypt the resulting private key if paperwallet was encrypted*
 4) Import resulting private key into litemode (t-Addresses) or native mode (z-Addresses and VerusIDs)
+
+For reference, here's a full commandline to decrypt some of the data you'd get from one of the (now obviously compromised) test keys used in development:
+
+```bash
+echo "U2FsdGVkX19IPKDlN0HERH1oKJ6f/UrMLe11jUBJ12HZDR0UlKANsS/LoeRyLk9WNEGW9Y47qEIZsFtTzqiB7Ixs4+KKJXEcBUHQACm1kYo=" | openssl enc -d -aes-256-cbc -a -salt -pbkdf2 -A -k "In posterum veritas, in Verus sanitas!"
+```
 
 ## Protection & Security
 
