@@ -1,14 +1,3 @@
-/*@font-face {
-    font-family: 'Noto Color Emoji';
-    src: url(html/font/NotoColorEmoji.ttf);
-    src: url(https://gitcdn.xyz/repo/googlefonts/noto-emoji/master/fonts/NotoColorEmoji.ttf);
-}
-@font-face {
-    font-family: 'Noto Mono Regular';
-    src: url(html/font/NotoMono-Regular.ttf);
-}
-@import url('http://fonts.cdnfonts.com/css/noto-mono');*/
-
 body{
     line-height: 1.2;    
 }

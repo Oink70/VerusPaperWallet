@@ -61,13 +61,13 @@ Instead of [`BIP0038`](https://github.com/bitcoin/bips/blob/master/bip-0038.medi
 
 ## Prerequisites
 
-The Verus Paperwallet generator incooperates different bits and pieces, some on board, some of which need to be preinstalled. As per usual, this guide is tailored to and has been tested on [`Debian 10 (Buster)`](https://debian.org) and thus should work on derivatives like Devuan or Ubuntu almost exactly the same. 
+The Verus Paperwallet generator incorporates different bits and pieces, some on board, some of which need to be preinstalled. As per usual, this guide is tailored to and has been tested on [`Debian 10 (Buster)`](https://debian.org) and thus should work on derivatives like Devuan or Ubuntu almost exactly the same. 
 
 For daemon mode, a running and fully synced Verus daemon to get your data from is the most important prerequisite. A default `verusd` config and the `wallet.dat` file you want to generate Paperwallets off will do. The `verusd` RPC interface must be enabled and accessible, the `verus` CLI binary must be in the `${PATH}` variable of your terminal session.
 
 Besides that, update your software and install the required packages as shown in the snippet below. 
 
-**NOTE**: You are supposed to use [`chromium`](https://www.chromium.org/Home) **without plugins in offline mode** to generate your paperwallet printouts. `firefox` [does **not** work](https://bugzilla.mozilla.org/show_bug.cgi?id=760436). Other browsers may work but are untested and unsupported.
+**NOTE**: You are supposed to use [`chromium`](https://www.chromium.org/Home) **without plugins in offline mode** to generate your paperwallet printouts. `firefox` [does **not** work properly](https://bugzilla.mozilla.org/show_bug.cgi?id=760436). Other browsers may work but are untested and unsupported.
 
 ```bash
 apt update
@@ -75,9 +75,21 @@ apt upgrade
 apt install openssl awk qrencode zbar-tools jq chromium
 ```
 
+After that is done, because of some limitations with shells and browsers and stuff, you will need to install these fonts onto your system: 
+
+  * [Source Sans Pro](https://fonts.google.com/specimen/Source+Sans+Pro)
+  * [Noto Mono](https://www.google.com/get/noto/) (search for `Noto Mono`)
+  * [Noto Color Emoji](https://www.google.com/get/noto/) (search for `Noto Color Emoji`)
+
+On GNU/Linux, usually unpacking the `.ttf` files and copying them to `~/.fonts/` and then rebuilding the fonts cache as seen below will do it: 
+
+```bash
+fc-cache -f -v
+```
+
 ## Installation
 
-After installing all necessary prerequisites, just clone this repository. No more installation needed. 
+After installing all necessary prerequisites, just clone this repository. 
 
 ```bash
 git clone https://github.com/BloodyNora/VerusPaperWallet
@@ -177,9 +189,14 @@ Storing plain-text printed paperwallets locally also can be a bad idea!
 
 ### Unauthorized electronic access
 
-To protect against electronic access, it is mandatory that you wipe any residue of your generated paperwallets or copies of the input data. That also includes the generated SVG images in `html/svg/` - leave the `logo.svg` intact. **BE CAREFUL WITH THAT, YOU COULD KILL YOUR WALLET IF YOU ACT CARELESSLY!**
+To protect against electronic access, it is mandatory that you wipe any residue of your generated paperwallets or copies of the input data. **BE CAREFUL WITH THAT, YOU COULD KILL YOUR WALLET IF YOU ACT CARELESSLY!**
 
-On GNU/Linux systems with `coreutils` installed, you can use the `shred(1)` utility to properly overwrite files before erasing them. See `man 1 shred` for more information.
+On GNU/Linux systems with `coreutils` installed, you can use the `shred(1)` utility to properly overwrite files before erasing them. See `man 1 shred` for more information. Example: 
+
+```bash
+shred --random-source /dev/urandom -n3 -z ./out.html
+rm ./out.html
+```
 
 ## Filing & long-term storage
 

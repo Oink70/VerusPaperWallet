@@ -1,0 +1,53 @@
+#!/bin/bash
+
+if [ -z "${1}" ]; then
+    echo "No address specified!"
+    exit 1
+fi
+
+
+ADDRESS_TYPE=$(echo ${1} | cut -c1)
+
+
+case "${ADDRESS_TYPE}" in
+    "i")
+        ISVALID=$(verus validateaddress ${1} | jq -r .isvalid 2>/dev/null)
+        [ "${ISVALID}" == "true" ] && {
+            BALANCE=$(verus getaddressbalance "{\"addresses\": [\"${1}\"]}" | jq -r .balance 2>/dev/null)
+            FRIENDLY=$(verus getidentity ${1} | jq -r .identity.name)
+            NUMSIG=$(verus getidentity ${1} | jq -r .identity.minimumsignatures 2>/dev/null)
+            TADDRESS=$(verus getidentity ${1} | jq -rM .identity.primaryaddresses[] | xargs echo)
+            ZADDRESS=$(verus getidentity ${1} | jq -rM .identity.privateaddress)
+        }
+        ;;
+    "R")
+        ISVALID=$(verus validateaddress ${1} | jq -r .isvalid 2>/dev/null)
+        [ "${ISVALID}" == "true" ] && {
+            BALANCE=$(verus getaddressbalance "{\"addresses\": [\"${1}\"]}" | jq -r .balance 2>/dev/null)
+            BALANCE=$(echo "scale=8;${BALANCE}/100000000" | bc)
+            PRIVATEKEY=$(verus dumpprivkey ${1}  2>/dev/null)
+        }
+        ;;
+    "z")
+        ISVALID=$(verus z_validateaddress ${1} | jq -r .isvalid 2>/dev/null)
+        [ "${ISVALID}" == "true" ] && {
+            BALANCE=$(verus z_getbalance ${1} 2>/dev/null)
+            PRIVATEKEY=$(verus z_exportkey ${1} 2>/dev/null)
+        }
+        ;;
+    *)
+        echo "Unknown address type!"
+        ;;
+esac
+
+echo -n "${1}: "
+if [ ${ISVALID} == "true" ]; then
+    echo VALID!
+    [ ! -z ${BALANCE} ] && echo BALANCE: ${BALANCE}
+    [ ! -z ${PRIVATEKEY} ] && echo PRIVATE KEY: ${PRIVATEKEY}
+    [ ! -z ${FRIENDLY} ] && echo FRIENDLY: ${FRIENDLY}
+    [ ! -z ${ZADDRESS} ] && echo ZADDRESS: ${ZADDRESS}
+    [ ! -z ${TADDRESS} ] && echo TADDRESS\(ES\): ${TADDRESS}
+else
+    echo INVALID!
+fi

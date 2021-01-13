@@ -322,7 +322,12 @@ create_html_paperwallet(){
     export CONTENT="${2}"
     OUTFILE="${3}"
 
+    # css stuff
+    export MASTER_CSS="$(cat html/css/master.css)"
+    export GEOMANIST="$(cat html/css/geomanist.css)"
     envsubst < "${SCAFFOLD}" > "${OUTFILE}"
+    unset MASTER_CSS GEOMANIST
+
 }
 
 ADDRESS_TYPE=$(echo ${ADDRESS} | cut -c1)
@@ -404,6 +409,12 @@ case "${TEMPLATE}" in
         ;;
 esac
 
-create_html_paperwallet "html/tpl/paperwallet.tpl" "${PAPERWALLET_SOURCE}" "${OUTFILE}"
+create_html_paperwallet "html/tpl/paperwallet.tpl" "${PAPERWALLET_SOURCE}" "${OUTFILE}" && {
+    echo "DONE! see ${OUTFILE}".
+    exit 1
+} || {
+    echo "ERROR!"
+    exit 0
+}
 
 # EOF
