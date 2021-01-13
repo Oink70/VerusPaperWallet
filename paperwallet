@@ -26,7 +26,7 @@ VERUSID_REQUIRED_SIGNATURES=1
 NOTES=In\ posterum\ veritas\ \&ndash\;\ in\ \<span\ class=\"font-size-35\ font-sourcesanspro\"\>verus\</span\>\ sanitas.
 
 # default qrencode options, FFFFFF00 -> white with 0 alpha (thus transparent).
-QRENCODE_OPTIONS="-tSVG -lM --svg-path --rle -m0 --background=FFFFFF00"
+QRENCODE_OPTIONS="-tSVG -lM --rle -m0 --background=FFFFFF00"
 
 # default output file
 OUTFILE="./out.html"
@@ -265,8 +265,8 @@ done
 #echo "VERUSID_ZADDRESS: ${VERUSID_ZADDRESS}"
 #echo "VERUSID_TADDRESS: $(echo ${VERUSID_TADDRESS})"
 
-#qrencode -tSVG --svg-path --rle -m0 --background=ffffff00 --foreground=4aa658ff -o ADDR.svg "RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W"
-#qrencode -tSVG --svg-path --rle -m0 --background=ffffff00 --foreground=d4313eff -o KEY.svg "Uqu4wkVekqnTCwR9SfrP6vmbFrt4D8stLC8EJG2FsqvcREHboiYL"
+#qrencode -tSVG --rle -m0 --background=ffffff00 --foreground=4aa658ff -o ADDR.svg "RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W"
+#qrencode -tSVG --rle -m0 --background=ffffff00 --foreground=d4313eff -o KEY.svg "Uqu4wkVekqnTCwR9SfrP6vmbFrt4D8stLC8EJG2FsqvcREHboiYL"
 
 get_qr_svg(){
     STRING="${1}"
