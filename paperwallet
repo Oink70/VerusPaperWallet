@@ -1,7 +1,9 @@
 #!/bin/bash
+VER=0.1a
 ##
 # paperwallet generator
 # ---
+# see https://github.com/BloodyNora/VerusPaperWallet for details
 ##  
 
 ##
@@ -54,6 +56,20 @@ AWK=$(which awk)
     exit 1
 }
 
+# jq
+JQ=$(which jq)
+[ -z ${JQ} ] && {
+    echo "jq not found, exiting" 1>&2
+    exit 1
+}
+
+# bc
+BC=$(which bc)
+[ -z ${BC} ] && {
+    echo "bc not found, exiting" 1>&2
+    exit 1
+}
+
 # chromium
 CHROMIUM=$(which chromium)
 [ -z ${CHROMIUM} ] && {
@@ -70,7 +86,8 @@ VERUS=$(which verus)
 # ---
 ##
 print_version(){
-    echo "Verus Paper Wallet ALPHA"
+    echo "Verus Paper Wallet v${VER}"
+    echo "See https://github.com/BloodyNora/VerusPaperWallet for details"
     echo "(c) 2021 ff. 0x03/BloodyNora"
     exit 1
 }
@@ -129,7 +146,7 @@ print_usage(){
 # and https://bl.ocks.org/magnetikonline/22c1eb412daa350eeceee76c97519da8
 # and 'man 1 getopt'
 ##
-ARGUMENT_LIST="bde"
+ARGUMENT_LIST="bdehv"
 LONG_ARGUMENT_LIST=(
     "cli-command"
     "notes"
@@ -217,11 +234,11 @@ while true; do
         shift;
         VERUSID_REQUIRED_SIGNATURES=${1}
         ;;
-    --version)
+    -v|--version)
         print_version
         exit 1
         ;;
-    --help)
+    -h|--help)
         print_usage
         exit 1
         ;;    
@@ -263,7 +280,7 @@ paperwallet_balance(){
     export BALANCE_DEC=$(echo ${BALANCE} | cut -d'.' -f2)
     export BALANCE_TEXT="$(./num2words "${BALANCE_INT}")"
     export BALANCE_INT=$(printf "%'.f" ${BALANCE_INT})
-    CONTENT_BALANCE=$(envsubst < html/tpl/balance.tpl )
+    CONTENT_BALANCE=$(envsubst < html/tpl/balance.tpl)
     echo "${CONTENT_BALANCE}"
 }
 
@@ -351,25 +368,25 @@ esac
     }
     case "${ADDRESS_TYPE}" in
         "i")
-            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | jq -r .isvalid 2>/dev/null)
+            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | ${JQ} -r .isvalid 2>/dev/null)
             [ "${ISVALID}" == "true" ] && {
-                VERUSID_REQUIRED_SIGNATURES=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | jq -r .balance 2>/dev/null)
-                VERUSID_FRIENDLYNAME="$(${VERUS} getidentity ${ADDRESS} | jq -r .identity.name)@"
+                VERUSID_REQUIRED_SIGNATURES=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | ${JQ} -r .balance 2>/dev/null)
+                VERUSID_FRIENDLYNAME="$(${VERUS} getidentity ${ADDRESS} | ${JQ} -r .identity.name)@"
                 NUMSIG=$(${VERUS} getidentity ${ADDRESS} | jq -r .identity.minimumsignatures 2>/dev/null)
-                VERUSID_TADDRESS=$(${VERUS} getidentity ${ADDRESS} | jq -rM .identity.primaryaddresses[] | xargs echo)
-                VERUSID_ZADDRESS=$(${VERUS} getidentity ${ADDRESS} | jq -rM .identity.privateaddress)
+                VERUSID_TADDRESS=$(${VERUS} getidentity ${ADDRESS} | ${JQ} -rM .identity.primaryaddresses[] | xargs echo)
+                VERUSID_ZADDRESS=$(${VERUS} getidentity ${ADDRESS} | ${JQ} -rM .identity.privateaddress)
             }
             ;;
         "R")
-            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | jq -r .isvalid 2>/dev/null)
+            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | ${JQ} -r .isvalid 2>/dev/null)
             [ "${ISVALID}" == "true" ] && {
-                BALANCE=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | jq -r .balance 2>/dev/null)
-                BALANCE=$(echo "scale=8;${BALANCE}/100000000" | bc)
+                BALANCE=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | ${JQ} -r .balance 2>/dev/null)
+                BALANCE=$(echo "scale=8;${BALANCE}/100000000" | ${BC})
                 KEY=$(${VERUS} dumpprivkey ${ADDRESS} 2>/dev/null)
             }
             ;;
         "z")
-            ISVALID=$(${VERUS} z_validateaddress ${ADDRESS} | jq -r .isvalid 2>/dev/null)
+            ISVALID=$(${VERUS} z_validateaddress ${ADDRESS} | ${JQ} -r .isvalid 2>/dev/null)
             [ "${ISVALID}" == "true" ] && {
                 BALANCE=$(${VERUS} z_getbalance ${ADDRESS} 2>/dev/null)
                 KEY=$(${VERUS} z_exportkey ${ADDRESS} 2>/dev/null)
