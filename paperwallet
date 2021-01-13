@@ -22,6 +22,12 @@ ENCRYPT_KEY=1
 # prepopulate the variable
 VERUSID_REQUIRED_SIGNATURES=1
 
+# RPC defaults
+RPCUSER="verus"
+RPCPASS="verus"
+RPCHOST="127.0.0.1"
+RPCPORT="27486"
+
 # default notes
 NOTES=In\ posterum\ veritas\ \&ndash\;\ in\ \<span\ class=\"font-size-35\ font-sourcesanspro\"\>verus\</span\>\ sanitas.
 
@@ -57,6 +63,13 @@ AWK=$(which awk)
     exit 1
 }
 
+# curl
+CURL=$(which curl)
+[ -z ${CURL} ] && {
+    echo "curl not found, exiting" 1>&2
+    exit 1
+}
+
 # jq
 JQ=$(which jq)
 [ -z ${JQ} ] && {
@@ -77,10 +90,6 @@ CHROMIUM=$(which chromium)
     echo "chromium not found - displaying & printing the paperwallet may be broken on other browsers."
     echo "See https://www.chromium.org/Home for chromium info and download links."
 }
-
-# verus cli
-VERUS=$(which verus)
-# dont exit, may not be used at all
 
 ##
 # version info
@@ -114,19 +123,21 @@ print_usage(){
     echo "Only long options have (mandatory) arguments."
     echo "  -b                                    toggle balance display"
     echo "  -d                                    get all info from verusd (specify only \"--address\"),"
-    echo "                                        also see --cli-command below"
+    echo "                                        also see the RPC options below"
     echo "  -e                                    disable encryption of private key"
     echo "  -m                                    generate monochrome SVG data only,"
     echo "                                        use this with older qrencode versions, i.e. on Ubuntu"
     echo "  --address ADDRESS                     primary address to use for paperwallet"
     echo "  --balance 12345.231132                balance to use for paperwallet"
-    echo "  --cli-command COMMAND                 path to verus commandline with needed options,"
-    echo "                                        defaults to trying to use 'verus' from the PATH"
     echo "  --key PRIVATEKEY                      private key to use for paperwallet"
     echo "  --notes NOTES                         shell escaped comment to put into paperwallet"
     echo "  --outfile OUTFILE                     file to write resulting paperwallet to,"
     echo "                                        defaults to \"${OUTFILE}\""
     echo "  --passphrase PASSPHRASE               passphrase to encrypt private key with"
+    echo "  --rpc-user                            RPC username (default: ${RPCUSER})"
+    echo "  --rpc-pass                            RPC password (default: ${RPCPASS})"
+    echo "  --rpc-host                            RPC hostname (default: ${RPCHOST})"
+    echo "  --rpc-port                            RPC port (default: ${RPCPORT})"
     echo "  --verusid-friendlyname FRIENDLYNAME   friendlyname to display for verusid"
     echo "  --verusid-zaddress ZADDRESS           zaddress to display for verusid"
     echo "  --verusid-taddress TADDRESS           taddress(es) associated with verusid,"
@@ -151,10 +162,13 @@ print_usage(){
 ##
 ARGUMENT_LIST="bdehmv"
 LONG_ARGUMENT_LIST=(
-    "cli-command"
     "notes"
     "address"
     "balance"
+    "rpc-user"
+    "rpc-pass"
+    "rpc-host"
+    "rpc-port"    
     "verusid-friendlyname"
     "verusid-zaddress"
     "verusid-taddress"
@@ -212,10 +226,6 @@ while true; do
         # https://unix.stackexchange.com/questions/465583/what-does-cut-return-if-the-specified-field-does-not-exist
         BALANCE="${1}.0"
         ;;
-    --cli-command)
-        shift;
-        VERUS="${1}"
-        ;;
     --key)
         shift;
         KEY="${1}"
@@ -231,6 +241,22 @@ while true; do
     --passphrase)
         shift;
         PASSPHRASE="${1}"
+        ;;
+    --rpc-user)
+        shift;
+        RPCUSER="${1}"
+        ;;
+    --rpc-pass)
+        shift;
+        RPCPASS="${1}"
+        ;;
+    --rpc-host)
+        shift;
+        RPCHOST="${1}"
+        ;;
+    --rpc-port)
+        shift;
+        RPCPORT="${1}"
         ;;
     --verusid-friendlyname)
         shift;
@@ -266,6 +292,127 @@ get_qr_svg(){
     STRING="${1}"
     QRCODE=$(${QRENCODE} ${QRENCODE_OPTIONS} -o- "${STRING}")
     echo "${QRCODE}"
+}
+
+rpc_isvalid(){
+	USER=$1
+	PASS=$2
+	HOST=$3
+	PORT=$4
+	ADDR=$5
+    ISVALID=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"validateaddress\", \"params\": [\"${ADDR}\"]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result.isvalid)
+
+	[ "${ISVALID}" == "true" ] && return 0 || return 1
+}
+
+rpc_isvalid_z(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+    ADDR=$5
+    ISVALID=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"z_validateaddress\", \"params\": [\"${ADDR}\"]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result.isvalid)
+
+    [ "${ISVALID}" == "true" ] && return 0 || return 1
+}
+
+rpc_getbalance(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+    ADDR=$5
+	BALANCE=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"getaddressbalance\", \"params\": [{\"addresses\":[\"${ADDR}\"]}]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result.balance)
+    
+    echo $(echo "scale=8;${BALANCE}/100000000"|${BC})
+    [ -z ${BALANCE} ] && return 0 || return 1
+}
+
+rpc_getbalance_z(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+    ADDR=$5
+	BALANCE=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"z_getbalance\", \"params\": [\"${ADDR}\"]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result)
+    
+    echo ${BALANCE}
+    [ -z ${BALANCE} ] && return 0 || return 1
+}
+
+rpc_exportkey(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+    ADDR=$5
+	KEY=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"dumpprivkey\", \"params\": [\"${ADDR}\"]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result)
+    
+    echo ${KEY}
+    [ -z ${KEY} ] && return 0 || return 1
+}
+
+rpc_exportkey_z(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+    ADDR=$5
+	KEY=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"z_exportkey\", \"params\": [\"${ADDR}\"]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result)
+    
+    echo ${KEY}
+    [ -z ${KEY} ] && return 0 || return 1
+}
+
+rpc_getidentity(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+    ADDR=$5
+    JSON=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"getidentity\", \"params\": [\"${ADDR}\"]}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null | ${JQ} -r .result)
+
+    VERUSID_REQUIRED_SIGNATURES=$(echo ${JSON} | ${JQ} -r .identity.minimumsignatures)
+    VERUSID_FRIENDLYNAME=$(echo ${JSON} | ${JQ} -r .identity.name)
+    VERUSID_ZADDRESS=$(echo ${JSON} | ${JQ} -r .identity.privateaddress)
+    VERUSID_TADDRESS=$(echo ${JSON} | ${JQ} -r .identity.primaryaddresses[] | xargs echo)
+
+    eval "VERUSID_FRIENDLYNAME=${VERUSID_FRIENDLYNAME} VERUSID_REQUIRED_SIGNATURES=${VERUSID_REQUIRED_SIGNATURES} VERUSID_ZADDRESS=${VERUSID_ZADDRESS} VERUSID_TADDRESS=${VERUSID_TADDRESS}"
+    [ ! -z ${VERUSID_FRIENDLYNAME} ] && return 0 || return 1
+}
+
+rpc_check(){
+    USER=$1
+    PASS=$2
+    HOST=$3
+    PORT=$4
+	DATA=$(${CURL} -X POST -u ${USER}:${PASS} --data-binary \
+    "{\"jsonrpc\": \"1.0\", \"id\": \"paperwallet\", \"method\": \"getmininginfo\"}" \
+    -H 'content-type: application/json;' \
+    http://${HOST}:${PORT} 2>/dev//null)
+    
+    [ ${?} -eq 7 ] && return 1 || return 0
 }
 
 paperwallet_balance(){
@@ -312,7 +459,7 @@ paperwallet_verusid(){
 
 
     # add number of signatures to comment if > 1
-    [ ${VERUSID_REQUIRED_SIGNATURES} -gt 1 ] && {
+    [ "${VERUSID_REQUIRED_SIGNATURES}" -gt 1 ] && {
         NOTES="Required number of signatures for \"${VERUSID_FRIENDLYNAME}\": <b>${VERUSID_REQUIRED_SIGNATURES} ($(./num2words ${VERUSID_REQUIRED_SIGNATURES}))</b><br />${NOTES}"
     }
 
@@ -352,34 +499,30 @@ case "${ADDRESS_TYPE}" in
 esac
 
 [ "${MODE}" == "daemon" ] && {
-    [ -z "$(ps aux | grep [v]erusd | awk '{print $2}')" ] && {
-        echo "ERROR: no running verus daemon found. Exiting!"
+    rpc_check "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}"
+    [ ${?} -eq 1 ] && {
+        echo "ERROR: RPC interface error. Check host, port, user and password. Exiting!"
         exit 1
     }
     case "${ADDRESS_TYPE}" in
         "i")
-            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | ${JQ} -r .isvalid 2>/dev/null)
-            [ "${ISVALID}" == "true" ] && {
-                VERUSID_REQUIRED_SIGNATURES=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | ${JQ} -r .balance 2>/dev/null)
-                VERUSID_FRIENDLYNAME="$(${VERUS} getidentity ${ADDRESS} | ${JQ} -r .identity.name)@"
-                NUMSIG=$(${VERUS} getidentity ${ADDRESS} | jq -r .identity.minimumsignatures 2>/dev/null)
-                VERUSID_TADDRESS=$(${VERUS} getidentity ${ADDRESS} | ${JQ} -rM .identity.primaryaddresses[] | xargs echo)
-                VERUSID_ZADDRESS=$(${VERUS} getidentity ${ADDRESS} | ${JQ} -rM .identity.privateaddress)
+            rpc_isvalid "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}"
+            [ ${?} ] && {
+                rpc_getidentity "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}"
             }
             ;;
         "R")
-            ISVALID=$(${VERUS} validateaddress ${ADDRESS} | ${JQ} -r .isvalid 2>/dev/null)
-            [ "${ISVALID}" == "true" ] && {
-                BALANCE=$(${VERUS} getaddressbalance "{\"addresses\": [\"${ADDRESS}\"]}" | ${JQ} -r .balance 2>/dev/null)
-                BALANCE=$(echo "scale=8;${BALANCE}/100000000" | ${BC})
-                KEY=$(${VERUS} dumpprivkey ${ADDRESS} 2>/dev/null)
+            rpc_isvalid "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}"
+            [ ${?} ] && {
+                BALANCE=$(rpc_getbalance "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}")
+                KEY=$(rpc_exportkey "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}")
             }
             ;;
         "z")
-            ISVALID=$(${VERUS} z_validateaddress ${ADDRESS} | ${JQ} -r .isvalid 2>/dev/null)
-            [ "${ISVALID}" == "true" ] && {
-                BALANCE=$(${VERUS} z_getbalance ${ADDRESS} 2>/dev/null)
-                KEY=$(${VERUS} z_exportkey ${ADDRESS} 2>/dev/null)
+            rpc_isvalid_z "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}"
+            [ ${?} ] && {
+                BALANCE=$(rpc_getbalance_z "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}")
+                KEY=$(rpc_exportkey_z "${RPCUSER}" "${RPCPASS}" "${RPCHOST}" "${RPCPORT}" "${ADDRESS}")
             }
             ;;
         *)

@@ -81,9 +81,8 @@ td {
 .row-light { background-color: rgba(240, 240, 240, 1); }
 
 .font-geomanist     { font-family: G;   }
-.font-sourcecodepro { font-family: SC;  }
 .font-noto          { font-family: Noto Mono, Noto Color Emoji; }
-.font-sourcesanspro { font-family: SSP; }
+.font-sourcesanspro { font-family: Source Sans Pro; }
 
 .font-size-20 { font-size: 2.0mm; }
 .font-size-25 { font-size: 2.5mm; }
