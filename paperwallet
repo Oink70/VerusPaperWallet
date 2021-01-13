@@ -26,7 +26,8 @@ VERUSID_REQUIRED_SIGNATURES=1
 NOTES=In\ posterum\ veritas\ \&ndash\;\ in\ \<span\ class=\"font-size-35\ font-sourcesanspro\"\>verus\</span\>\ sanitas.
 
 # default qrencode options, FFFFFF00 -> white with 0 alpha (thus transparent).
-QRENCODE_OPTIONS="-tSVG -lM --rle -m0 --background=FFFFFF00"
+QRENCODE_OPTIONS="-tSVG --svg-path -lM --rle -m0 --background=FFFFFF00"
+QRENCODE_OPTIONS_BW="-tSVG -lM --rle -m0 --background=FFFFFF00"
 
 # default output file
 OUTFILE="./out.html"
@@ -115,6 +116,8 @@ print_usage(){
     echo "  -d                                    get all info from verusd (specify only \"--address\"),"
     echo "                                        also see --cli-command below"
     echo "  -e                                    disable encryption of private key"
+    echo "  -m                                    generate monochrome SVG data only,"
+    echo "                                        use this with older qrencode versions, i.e. on Ubuntu"
     echo "  --address ADDRESS                     primary address to use for paperwallet"
     echo "  --balance 12345.231132                balance to use for paperwallet"
     echo "  --cli-command COMMAND                 path to verus commandline with needed options,"
@@ -146,7 +149,7 @@ print_usage(){
 # and https://bl.ocks.org/magnetikonline/22c1eb412daa350eeceee76c97519da8
 # and 'man 1 getopt'
 ##
-ARGUMENT_LIST="bdehv"
+ARGUMENT_LIST="bdehvm"
 LONG_ARGUMENT_LIST=(
     "cli-command"
     "notes"
@@ -233,6 +236,9 @@ while true; do
     --verusid-required-signatures)
         shift;
         VERUSID_REQUIRED_SIGNATURES=${1}
+        ;;
+    -m)
+        QRENCODE_OPTIONS="${QRENCODE_OPTIONS_BW}"
         ;;
     -v|--version)
         print_version
