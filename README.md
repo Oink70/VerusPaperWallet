@@ -72,7 +72,7 @@ Besides that, update your software and install the required packages as shown in
 ```bash
 apt update
 apt upgrade
-apt install openssl awk qrencode zbar-tools jq chromium
+apt install openssl awk bc qrencode zbar-tools jq chromium
 ```
 
 After that is done, because of some limitations with shells and browsers and stuff, you will need to install these fonts onto your system: 
@@ -86,6 +86,8 @@ On GNU/Linux, usually unpacking the `.ttf` files and copying them to `~/.fonts/`
 ```bash
 fc-cache -f -v
 ```
+
+**NOTE:** If you do not want coloured Emoji icons, you can replace `Noto Color Emoji` with just `Noto Emoji`. Furthermore, in case you can make sure that none of your VerusIDs you want to create paperwallets for does have Emojis in their friendly names, you can obviously skip installing the `Emoji` font altogether.
 
 ## Installation
 
