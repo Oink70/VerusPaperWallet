@@ -149,7 +149,7 @@ print_usage(){
 # and https://bl.ocks.org/magnetikonline/22c1eb412daa350eeceee76c97519da8
 # and 'man 1 getopt'
 ##
-ARGUMENT_LIST="bdehvm"
+ARGUMENT_LIST="bdehmv"
 LONG_ARGUMENT_LIST=(
     "cli-command"
     "notes"
@@ -190,35 +190,47 @@ while true; do
     -e)
         ENCRYPT_KEY=0
         ;;
-    --cli-command)
-        shift;
-        VERUS="${1}"
+    -m)
+        QRENCODE_OPTIONS="${QRENCODE_OPTIONS_BW}"
         ;;
-    --notes)
-        shift;
-        NOTES="${1}"
+    -v|--version)
+        print_version
+        exit 1
         ;;
+    -h|--help)
+        print_usage
+        exit 1
+        ;;  
     --address)
         shift;
         ADDRESS="${1}"
         ;;
     --balance)
         shift;
-        # https://unix.stackexchange.com/questions/465583/what-does-cut-return-if-the-specified-field-does-not-exist
+        # set "show balance" flag
         SHOW_BALANCE=1
+        # https://unix.stackexchange.com/questions/465583/what-does-cut-return-if-the-specified-field-does-not-exist
         BALANCE="${1}.0"
+        ;;
+    --cli-command)
+        shift;
+        VERUS="${1}"
         ;;
     --key)
         shift;
         KEY="${1}"
         ;;
-    --passphrase)
+    --notes)
         shift;
-        PASSPHRASE="${1}"
+        NOTES="${1}"
         ;;
     --outfile)
         shift;
         OUTFILE="${1}"
+        ;;
+    --passphrase)
+        shift;
+        PASSPHRASE="${1}"
         ;;
     --verusid-friendlyname)
         shift;
@@ -237,17 +249,6 @@ while true; do
         shift;
         VERUSID_REQUIRED_SIGNATURES=${1}
         ;;
-    -m)
-        QRENCODE_OPTIONS="${QRENCODE_OPTIONS_BW}"
-        ;;
-    -v|--version)
-        print_version
-        exit 1
-        ;;
-    -h|--help)
-        print_usage
-        exit 1
-        ;;    
     --)
         shift
         break
@@ -260,19 +261,6 @@ done
     echo "No address specified, exiting."
     exit 0;
 }
-
-#echo "SHOW_BALANCE: ${SHOW_BALANCE}"
-#echo "SHOW_BALANCE_WORDS: ${SHOW_BALANCE_WORDS}"
-#echo "ENCRYPT_KEY: ${ENCRYPT_KEY}"
-#echo "ADDRESS: ${ADDRESS}"
-#echo "KEY: ${KEY}"
-#echo "NOTES: ${NOTES}"
-#echo "VERUSID_FRIENDLYNAME: ${VERUSID_FRIENDLYNAME}"
-#echo "VERUSID_ZADDRESS: ${VERUSID_ZADDRESS}"
-#echo "VERUSID_TADDRESS: $(echo ${VERUSID_TADDRESS})"
-
-#qrencode -tSVG --rle -m0 --background=ffffff00 --foreground=4aa658ff -o ADDR.svg "RYEeZExoasXs1npLNR3A9cqyfa5UPuCU3W"
-#qrencode -tSVG --rle -m0 --background=ffffff00 --foreground=d4313eff -o KEY.svg "Uqu4wkVekqnTCwR9SfrP6vmbFrt4D8stLC8EJG2FsqvcREHboiYL"
 
 get_qr_svg(){
     STRING="${1}"
@@ -304,10 +292,7 @@ paperwallet(){
     
 
    export CONTENT_BALANCE=""
-    if [ ${SHOW_BALANCE} -eq 1 ]; then
-        export CONTENT_BALANCE=$(paperwallet_balance "${BALANCE}")
-    fi
-
+   [ ${SHOW_BALANCE} -eq 1 ] && export CONTENT_BALANCE=$(paperwallet_balance "${BALANCE}")
     
     echo "$(envsubst < html/tpl/${TEMPLATE}.tpl)"
 }
@@ -338,6 +323,7 @@ paperwallet_verusid(){
 
     export CONTENT_WALLET=$(envsubst < html/tpl/verusid.tpl)
     echo "${CONTENT_WALLET}"
+
 }
 
 create_html_paperwallet(){
@@ -349,8 +335,6 @@ create_html_paperwallet(){
     export MASTER_CSS="$(cat html/css/master.css)"
     export GEOMANIST="$(cat html/css/geomanist.css)"
     envsubst < "${SCAFFOLD}" > "${OUTFILE}"
-    unset MASTER_CSS GEOMANIST CONTENT
-
 }
 
 ADDRESS_TYPE=$(echo ${ADDRESS} | cut -c1)
@@ -433,11 +417,20 @@ case "${TEMPLATE}" in
 esac
 
 create_html_paperwallet "html/tpl/paperwallet.tpl" "${PAPERWALLET_SOURCE}" "${OUTFILE}" && {
-    echo "DONE! see ${OUTFILE}".
-    exit 1
+    echo "DONE! see ${OUTFILE}"
 } || {
     echo "ERROR!"
-    exit 0
 }
+
+##
+# proper cleanup
+##
+unset ADDRESS KEY 
+unset BALANCE BALANCE_DEC BALANCE_TEXT BALANCE_INT 
+unset NOTES DATE 
+unset SVG_KEY SVG_ADDRESS SVG_VERUSID
+unset VERUSID_FRIENDLYNAME VERUSID_REQUIRED_SIGNATURES VERUSID_TADDRESS VERUSID_ZADDRESS  
+unset CONTENT CONTENT_BALANCE CONTENT_WALLET CONTENT
+unset TEMPLATE MASTER_CSS GEOMANIST
 
 # EOF
